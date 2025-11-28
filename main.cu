@@ -90,6 +90,7 @@ std::vector<double> gauss_jacobi_cpu(const std::vector<double> &A,
 
 // Cada thread calcula x_new[i] da linha i:
 // soma os produtos A[i,j] * x[j] para j != i, depois aplica a fórmula de Jacobi
+// TODO: shared memory para o vetor x
 // TODO: criterio de parada na gpu, usando redução
 __global__ void gauss_jacobi_kernel(double *A, double *b, double *x, double *x_new, int n) {
     
