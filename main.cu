@@ -55,6 +55,7 @@ std::vector<double> gauss_jacobi_cpu(const std::vector<double> &A,
     
     return x;
 }
+
 // TODO Verificar convergência na GPU com redução 
 __global__ void gauss_jacobi_kernel(double *A, double *b, double *x, double *x_new, int n) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
@@ -74,16 +75,29 @@ std::vector<double> gauss_jacobi_gpu(const std::vector<double> &A_h,
                                      const std::vector<double> &b_h,
                                      const std::vector<double> &x_h,
                                      int n, double tol, int max_iter,
-                                     double &tempo_alocacao,
-                                     double &tempo_computacao,
-                                     double &tempo_transferencia) {
+                                     float &tempo_alocacao,
+                                     float &tempo_computacao,
+                                     float &tempo_transferencia) {
     std::vector<double> x(n);
     double *A_d, *b_d, *x_d, *x_new_d;
     
     int threadsPerBlock = 256;
     int blocks = (n + threadsPerBlock - 1) / threadsPerBlock;
 
-    auto start_alloc = std::chrono::high_resolution_clock::now();
+    // Criar eventos
+    cudaEvent_t start_alloc, end_alloc;
+    cudaEvent_t start_compute, end_compute;
+    cudaEvent_t start_transfer, end_transfer;
+    
+    cudaEventCreate(&start_alloc);
+    cudaEventCreate(&end_alloc);
+    cudaEventCreate(&start_compute);
+    cudaEventCreate(&end_compute);
+    cudaEventCreate(&start_transfer);
+    cudaEventCreate(&end_transfer);
+
+    // Alocação + H->D
+    cudaEventRecord(start_alloc);
     
     cudaMalloc(&A_d, n * n * sizeof(double));
     cudaMalloc(&b_d, n * sizeof(double));
@@ -94,31 +108,42 @@ std::vector<double> gauss_jacobi_gpu(const std::vector<double> &A_h,
     cudaMemcpy(b_d, b_h.data(), n * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(x_d, x_h.data(), n * sizeof(double), cudaMemcpyHostToDevice);
     
-    auto end_alloc = std::chrono::high_resolution_clock::now();
-    tempo_alocacao = std::chrono::duration<double, std::milli>(end_alloc - start_alloc).count();
+    cudaEventRecord(end_alloc);
 
-    auto start_compute = std::chrono::high_resolution_clock::now();
+    // Computação
+    cudaEventRecord(start_compute);
     
     for (int k = 0; k < max_iter; k++) {
         gauss_jacobi_kernel<<<blocks, threadsPerBlock>>>(A_d, b_d, x_d, x_new_d, n);
         std::swap(x_d, x_new_d);
     }
-    cudaDeviceSynchronize();
     
-    auto end_compute = std::chrono::high_resolution_clock::now();
-    tempo_computacao = std::chrono::duration<double, std::milli>(end_compute - start_compute).count();
+    cudaEventRecord(end_compute);
 
-    auto start_transfer = std::chrono::high_resolution_clock::now();
-    
+    // D->H
+    cudaEventRecord(start_transfer);
     cudaMemcpy(x.data(), x_d, n * sizeof(double), cudaMemcpyDeviceToHost);
-    
-    auto end_transfer = std::chrono::high_resolution_clock::now();
-    tempo_transferencia = std::chrono::duration<double, std::milli>(end_transfer - start_transfer).count();
+    cudaEventRecord(end_transfer);
 
+    // Sincronizar e obter tempos
+    cudaEventSynchronize(end_transfer);
+    
+    cudaEventElapsedTime(&tempo_alocacao, start_alloc, end_alloc);
+    cudaEventElapsedTime(&tempo_computacao, start_compute, end_compute);
+    cudaEventElapsedTime(&tempo_transferencia, start_transfer, end_transfer);
+
+    // Cleanup
     cudaFree(A_d);
     cudaFree(b_d);
     cudaFree(x_d);
     cudaFree(x_new_d);
+    
+    cudaEventDestroy(start_alloc);
+    cudaEventDestroy(end_alloc);
+    cudaEventDestroy(start_compute);
+    cudaEventDestroy(end_compute);
+    cudaEventDestroy(start_transfer);
+    cudaEventDestroy(end_transfer);
 
     return x;
 }
@@ -127,7 +152,7 @@ int main() {
     int n;
     std::vector<double> A, b;
 
-    std::ifstream file("data/matriz2000x2000.txt");
+    std::ifstream file("data/matriz500x500.txt");
 
     if (!file.is_open()) {
         std::cerr << "Erro ao abrir o arquivo.\n";
@@ -167,7 +192,7 @@ int main() {
     std::cout << "\nCPU:" << std::endl;
     std::cout << "  Tempo total: " << tempo_cpu << " ms" << std::endl;
 
-    double tempo_alloc, tempo_compute, tempo_transfer;
+    float tempo_alloc, tempo_compute, tempo_transfer;
     auto x_gpu = gauss_jacobi_gpu(A, b, x0, n, 1e-12, max_iter, 
                                    tempo_alloc, tempo_compute, tempo_transfer);
     
