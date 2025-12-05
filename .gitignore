@@ -1,6 +1,13 @@
 # VSCode settings
 .vscode/
 
+# Build directories
+build/
+bin/
+
+# Results
+results/*.csv
+
 # Build artifacts
 main
 *.o
