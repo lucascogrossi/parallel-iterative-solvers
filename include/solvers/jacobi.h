@@ -16,11 +16,12 @@ public:
 
 struct GPUTimings {
     float allocation_ms = 0.0f;
+    float host_to_device_ms = 0.0f;
     float computation_ms = 0.0f;
-    float transfer_ms = 0.0f;
+    float device_to_host_ms = 0.0f;
 
     float total() const {
-        return allocation_ms + computation_ms + transfer_ms;
+        return allocation_ms + host_to_device_ms + computation_ms + device_to_host_ms;
     }
 };
 
