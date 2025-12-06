@@ -1,4 +1,5 @@
 #include "solvers/jacobi.h"
+#include "solvers/gauss_seidel.h"
 #include "utils/matrix_io.h"
 #include "benchmark/benchmark.h"
 #include <iostream>
@@ -16,6 +17,7 @@ int main() {
     // Criar solvers
     auto jacobi_cpu = std::make_shared<JacobiCPU>();
     auto jacobi_gpu = std::make_shared<JacobiGPU>();
+    auto gauss_seidel_cpu = std::make_shared<GaussSeidelCPU>();
 
     // Definir solver de referência (CPU)
     suite.set_reference_solver(jacobi_cpu);
@@ -23,6 +25,7 @@ int main() {
     // Adicionar solvers para benchmark
     suite.add_solver(jacobi_cpu);
     suite.add_solver(jacobi_gpu);
+    suite.add_solver(gauss_seidel_cpu);
 
     // Adicionar matrizes
     suite.add_matrix("data/small/matriz3x3.txt");
