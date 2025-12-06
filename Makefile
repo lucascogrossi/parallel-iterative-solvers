@@ -10,7 +10,6 @@ BIN_DIR = bin
 
 # Targets
 TARGET = $(BIN_DIR)/parallel_solvers
-TARGET_DETAILED = $(BIN_DIR)/detailed_timing
 
 # Compiler flags
 NVCC_FLAGS = -std=c++17 -O3 -I$(INCLUDE_DIR)
@@ -54,24 +53,9 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(NVCC) $(NVCC_FLAGS) -c $< -o $@
 
-# Build detailed timing version
-detailed: directories $(TARGET_DETAILED)
-
-$(TARGET_DETAILED): $(BUILD_DIR)/main_detailed.o $(filter-out $(BUILD_DIR)/main.o, $(ALL_OBJECTS))
-	$(NVCC) $(NVCC_FLAGS) $^ -o $@
-	@echo "Build complete: $(TARGET_DETAILED)"
-
-$(BUILD_DIR)/main_detailed.o: $(SRC_DIR)/main_detailed.cu
-	@mkdir -p $(dir $@)
-	$(NVCC) $(NVCC_FLAGS) -c $< -o $@
-
 # Run the program
 run: $(TARGET)
 	./$(TARGET)
-
-# Run detailed timing version
-run-detailed: $(TARGET_DETAILED)
-	./$(TARGET_DETAILED)
 
 # Clean build artifacts
 clean:
@@ -87,7 +71,7 @@ clean-results:
 clean-all: clean clean-results
 
 # Phony targets
-.PHONY: all detailed directories run run-detailed clean clean-results clean-all info
+.PHONY: all directories run clean clean-results clean-all info
 
 # Show configuration
 info:
