@@ -28,9 +28,9 @@ int main() {
     suite.add_solver(gauss_seidel_cpu);
 
     // Adicionar matrizes
-    suite.add_matrix("data/small/matriz3x3.txt");
-    suite.add_matrix("data/medium/matriz500x500.txt");
-    suite.add_matrix("data/large/matriz2000x2000.txt");
+    suite.add_matrix("data/dense/small/matriz3x3.txt");
+    suite.add_matrix("data/dense/medium/matriz500x500.txt");
+    suite.add_matrix("data/dense/large/matriz2000x2000.txt");
 
     // Configurar e executar
     suite.set_config(config);
