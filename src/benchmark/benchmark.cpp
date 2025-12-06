@@ -81,10 +81,10 @@ std::vector<BenchmarkResult> BenchmarkSuite::run() {
             auto gpu_solver = std::dynamic_pointer_cast<JacobiGPU>(solver);
             if (gpu_solver) {
                 const auto& timings = gpu_solver->get_timings();
-                std::cout << "    - Allocation:  " << timings.allocation_ms << " ms" << std::endl;
-                std::cout << "    - H->D:        " << timings.host_to_device_ms << " ms" << std::endl;
-                std::cout << "    - Computation: " << timings.computation_ms << " ms" << std::endl;
-                std::cout << "    - D->H:        " << timings.device_to_host_ms << " ms" << std::endl;
+                std::cout << "    - cudaMalloc:  " << timings.allocation_ms << " ms" << std::endl;
+                std::cout << "    - cudaMemcpyHostToDevice:        " << timings.host_to_device_ms << " ms" << std::endl;
+                std::cout << "    - Kernel: " << timings.computation_ms << " ms" << std::endl;
+                std::cout << "    - cudaMemcpyDeviceToHost:        " << timings.device_to_host_ms << " ms" << std::endl;
             }
 
             results.push_back(bench_result);
